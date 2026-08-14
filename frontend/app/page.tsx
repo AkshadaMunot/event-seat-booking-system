@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://event-seat-booking-system.onrender.com";
 
 type Event = {
   id: number;
