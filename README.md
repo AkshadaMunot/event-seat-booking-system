@@ -3,7 +3,9 @@
 
 A full-stack web application for managing events, seats, and online seat bookings.
 
-The system allows administrators to create events and seat layouts, while users can view available seats and book them. The application uses a Next.js frontend, FastAPI backend, and MySQL database.
+The system allows administrators to create events and generate event-specific seat layouts, while users can view upcoming events, select available seats, and make bookings.
+
+The application is built using **Next.js, FastAPI, SQLAlchemy, and MySQL**.
 
 ---
 
@@ -11,19 +13,31 @@ The system allows administrators to create events and seat layouts, while users 
 
 The Event Seat Booking System provides a simple platform for managing event seat reservations.
 
+Each event has its own independent seat layout. Seat numbers such as `A1`, `A2`, `A3` can therefore exist in multiple events without causing duplicate-seat issues between events.
+
 ### Admin can:
+
 - Create new events
-- Add seats to an event
+- Create event-specific seat layouts
+- Generate multiple seats using a seat prefix
 - View existing events
-- Manage seat layouts
+- Manage individual seats
+- Block available seats
+- Unblock blocked seats
+- View event-specific dashboard
+- Monitor bookings for a selected event
+- View total, available, booked, and blocked seats
 
 ### Users can:
-- View available events
-- View seat availability
-- Select an available seat
+
+- View upcoming events
+- Select an event
+- View event-specific seat availability
+- Select one or multiple available seats
 - Enter customer details
-- Book a seat
+- Book selected seats
 - View booking history
+- See booked and unavailable seats
 
 The system also prevents a seat from being booked more than once.
 
@@ -31,39 +45,77 @@ The system also prevents a seat from being booked more than once.
 
 ## 🚀 Features
 
+### Event Management
+
 - Event creation
-- Seat layout creation
 - Event listing
-- Seat availability display
-- Online seat booking
-- Booking history
-- Available and booked seat status
+- Event-specific seat layouts
+- Event-specific booking management
+- Multiple events supported independently
+
+### Seat Management
+
+- Generate multiple seats at once
+- Custom seat prefix support
+- Example: `A1, A2, A3 ... A10`
+- Event-specific seat numbering
+- Available seat status
+- Booked seat status
+- Blocked seat status
+- Block and unblock seats
+
+### Booking
+
+- Single-seat booking
+- Multiple-seat booking
+- Customer name and email
+- Booking confirmation
 - Already-booked seat protection
-- Database-level unique constraint for bookings
-- REST APIs using FastAPI
-- MySQL database integration
-- Frontend and backend API integration
-- Admin and user interfaces
+- Database-level duplicate booking protection
+- Event-specific booking records
+
+### Admin Dashboard
+
+- Total seats
+- Available seats
+- Booked seats
+- Blocked seats
+- Event bookings
+- Individual seat management
+
+### Booking History
+
+- Booking ID
+- Customer name
+- Customer email
+- Seat ID
+- Booking time
+- Event-specific booking information
 
 ---
 
 ## 🛠️ Technologies Used
 
 ### Frontend
+
 - Next.js
 - React
 - TypeScript
 - Tailwind CSS
 
 ### Backend
+
 - Python
 - FastAPI
 - SQLAlchemy
+- Pydantic
 
 ### Database
+
 - MySQL
 
 ### Development Tools
+
 - Visual Studio Code
 - MySQL Workbench
 - Git
@@ -76,16 +128,16 @@ The system also prevents a seat from being booked more than once.
 
 ```text
 User / Admin
-     │
-     ▼
+      │
+      ▼
 Next.js Frontend
-     │
-     │ REST API
-     ▼
+      │
+      │ REST API
+      ▼
 FastAPI Backend
-     │
-     │ SQLAlchemy
-     ▼
+      │
+      │ SQLAlchemy ORM
+      ▼
 MySQL Database
 ````
 
@@ -100,11 +152,11 @@ event-seat-booking-system/
 │   ├── main.py
 │   ├── models.py
 │   ├── database.py
-│   ├── requirements.txt
-│   └── .env
+│   └── requirements.txt
 │
 ├── frontend/
 │   ├── app/
+│   │   └── page.tsx
 │   ├── public/
 │   ├── package.json
 │   └── ...
@@ -114,6 +166,36 @@ event-seat-booking-system/
 ```
 
 > The `.env` file contains local database credentials and should not be committed to GitHub.
+
+---
+
+
+## 🪑 Event-Specific Seat Management
+
+Seats belong to a specific event.
+
+For example:
+
+```text
+Event 1
+A1  A2  A3  A4  A5  A6  A7  A8  A9  A10
+
+Event 2
+A1  A2  A3  A4  A5  A6  A7  A8  A9  A10
+```
+
+The same seat number can therefore exist in different events.
+
+For example:
+
+```text
+Event 1 → A3
+Event 2 → A3
+```
+
+These are two different seats because they belong to different events.
+
+This prevents seat numbering from being incorrectly shared across events.
 
 ---
 
@@ -130,12 +212,14 @@ Available Seat
       ↓
 Check Seat Status
       ↓
-If Available → Create Booking
+If Available
+      ↓
+Create Booking
       ↓
 Change Status → Booked
 ```
 
-If the seat is already booked, the API returns:
+If the seat has already been booked, the API returns a conflict response.
 
 ```text
 409 Conflict
@@ -156,17 +240,17 @@ This ensures that one seat can have only one booking even if duplicate booking r
 
 ## 🔌 Main API Endpoints
 
-| Method | Endpoint                   | Purpose                  |
-| ------ | -------------------------- | ------------------------ |
-| GET    | `/`                        | Check API status         |
-| GET    | `/db-test`                 | Test database connection |
-| GET    | `/tables-test`             | Test database tables     |
-| POST   | `/events`                  | Create an event          |
-| GET    | `/events`                  | Get all events           |
-| POST   | `/seats`                   | Create a seat            |
-| GET    | `/events/{event_id}/seats` | Get seats for an event   |
-| POST   | `/bookings`                | Book a seat              |
-| GET    | `/bookings`                | Get all bookings         |
+| Method | Endpoint                      | Purpose                           |
+| ------ | ----------------------------- | --------------------------------- |
+| GET    | `/`                           | Check API status                  |
+| GET    | `/db-test`                    | Test database connection          |
+| GET    | `/tables-test`                | Test database tables              |
+| POST   | `/events`                     | Create an event                   |
+| GET    | `/events`                     | Get all events                    |
+| POST   | `/seats`                      | Create seats                      |
+| GET    | `/events/{event_id}/seats`    | Get seats for an event            |
+| POST   | `/bookings`                   | Create a booking                  |
+| GET    | `/events/{event_id}/bookings` | Get bookings for a specific event |
 
 ---
 
@@ -179,22 +263,41 @@ git clone <YOUR_GITHUB_REPOSITORY_URL>
 cd event-seat-booking-system
 ```
 
+---
+
 ### 2. Backend Setup
+
+Open the backend folder:
 
 ```bash
 cd backend
+```
+
+Create a Python virtual environment:
+
+```bash
 python -m venv venv
+```
+
+Activate the virtual environment on Windows:
+
+```bash
 venv\Scripts\activate
+```
+
+Install the required dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-Create a `.env` file inside the backend folder:
+Create a `.env` file inside the `backend` folder:
 
 ```env
 DATABASE_URL=mysql+pymysql://root:YOUR_PASSWORD@localhost:3306/seat_booking_db
 ```
 
-Start the backend:
+Start the FastAPI backend:
 
 ```bash
 uvicorn main:app --reload
@@ -206,19 +309,31 @@ Backend:
 http://127.0.0.1:8000
 ```
 
-Swagger:
+Swagger / OpenAPI documentation:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
+---
+
 ### 3. Frontend Setup
 
-Open another terminal:
+Open another terminal and go to the frontend folder:
 
 ```bash
 cd frontend
+```
+
+Install dependencies:
+
+```bash
 npm install
+```
+
+Start the Next.js development server:
+
+```bash
 npm run dev
 ```
 
@@ -236,13 +351,19 @@ The application was tested for:
 
 * Database connectivity
 * Event creation
+* Event listing
 * Seat creation
+* Event-specific seat layouts
 * Seat availability
-* Successful booking
+* Seat blocking and unblocking
+* Single-seat booking
+* Multiple-seat booking
 * Already-booked seat handling
+* Duplicate booking prevention
+* Event-specific booking information
 * Booking history
 * Frontend-backend integration
-* Database-level duplicate booking prevention
+* MySQL database operations
 
 ---
 
@@ -250,7 +371,9 @@ The application was tested for:
 
 * Database credentials are stored in `.env`.
 * `.env` is excluded from Git using `.gitignore`.
-* `venv`, `node_modules`, and generated build files are excluded from the repository.
+* `venv` is excluded from the repository.
+* `node_modules` is excluded from the repository.
+* Generated build files are excluded from the repository.
 * Database credentials should never be exposed publicly.
 
 ---
@@ -258,13 +381,16 @@ The application was tested for:
 ## 🎯 Future Improvements
 
 * User authentication and authorization
-* Event deletion and editing
+* Admin authentication
+* Event editing
+* Event deletion
 * Booking cancellation
 * Payment integration
 * Email booking confirmation
 * QR-code based booking tickets
 * Online deployment
-* Improved admin authentication
+* Improved admin access control
+* Responsive UI improvements
 
 ---
 
@@ -272,7 +398,9 @@ The application was tested for:
 
 **Event Seat Booking System**
 
-Built using **Next.js + FastAPI + MySQL**.
+Built using:
 
-`
+**Next.js + FastAPI + SQLAlchemy + MySQL**
+
+---
 
