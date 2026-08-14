@@ -1,4 +1,5 @@
 from typing import List
+from datetime import timezone
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,24 +12,59 @@ from database import engine, Base, get_db
 import models
 
 
-# Create database tables
+# =========================================================
+# CREATE DATABASE TABLES
+# =========================================================
+
 Base.metadata.create_all(bind=engine)
 
+
+# =========================================================
+# FASTAPI APP
+# =========================================================
 
 app = FastAPI(title="Event Seat Booking API")
 
 
+# =========================================================
+# CORS
+# =========================================================
+
 app.add_middleware(
     CORSMiddleware,
-  allow_origins=[
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://event-seat-booking-system.vercel.app",
-],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://event-seat-booking-system.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# =========================================================
+# DATETIME HELPER
+# =========================================================
+# Database stores booking time in UTC.
+# This helper makes sure the API explicitly sends
+# the UTC timezone information (+00:00).
+#
+# The frontend page.tsx converts this to Asia/Kolkata.
+# =========================================================
+
+def serialize_datetime(value):
+    if value is None:
+        return None
+
+    # SQLAlchemy/SQLite may return a naive datetime even
+    # though we created it using datetime.now(timezone.utc).
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+
+    return value.isoformat()
 
 
 # =========================================================
@@ -130,6 +166,7 @@ def create_seats(
     event_id: int,
     db: Session = Depends(get_db)
 ):
+
     # Check whether event exists
     event = (
         db.query(models.Event)
@@ -205,6 +242,7 @@ def create_seats(
             status_code=409,
             detail="One or more seats already exist"
         )
+
 
 @app.get("/events/{event_id}/seats")
 def get_event_seats(
@@ -343,6 +381,7 @@ def create_booking(
     # This prevents two users from modifying
     # the same seats simultaneously.
     #
+
     seats = (
         db.query(models.Seat)
         .filter(models.Seat.id.in_(seat_ids))
@@ -383,6 +422,7 @@ def create_booking(
     # Either ALL seats are booked
     # OR NONE of them are booked.
     #
+
     try:
 
         bookings = []
@@ -442,13 +482,30 @@ def get_bookings(
         .all()
     )
 
-    return bookings
+    return [
+        {
+            "id": booking.id,
+            "customer_name": booking.customer_name,
+            "customer_email": booking.customer_email,
+            "seat_id": booking.seat_id,
+            "created_at": serialize_datetime(
+                booking.created_at
+            )
+        }
+        for booking in bookings
+    ]
+
+
+# =========================================================
+# GET EVENT BOOKINGS
+# =========================================================
 
 @app.get("/events/{event_id}/bookings")
 def get_event_bookings(
     event_id: int,
     db: Session = Depends(get_db)
 ):
+
     event = db.query(models.Event).filter(
         models.Event.id == event_id
     ).first()
@@ -484,7 +541,9 @@ def get_event_bookings(
             "customer_email": booking.customer_email,
             "seat_id": booking.seat_id,
             "seat_number": seat_number,
-            "created_at": booking.created_at
+            "created_at": serialize_datetime(
+                booking.created_at
+            )
         }
         for booking, seat_number in rows
     ]
@@ -565,7 +624,9 @@ def get_admin_event_summary(
             "seat_id": booking.seat_id,
             "customer_name": booking.customer_name,
             "customer_email": booking.customer_email,
-            "created_at": booking.created_at
+            "created_at": serialize_datetime(
+                booking.created_at
+            )
         })
 
     return {
