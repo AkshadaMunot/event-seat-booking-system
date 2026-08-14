@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime,timezone
 
 from database import Base
 
@@ -23,8 +24,21 @@ class Seat(Base):
     __tablename__ = "seats"
 
     id = Column(Integer, primary_key=True, index=True)
-    seat_number = Column(String(20), nullable=False)
-    status = Column(String(20), default="available")
+
+    seat_number = Column(
+        String(20),
+        nullable=False
+    )
+
+    # Possible values:
+    # available → can be booked
+    # booked    → already booked
+    # blocked   → unavailable for booking
+    status = Column(
+        String(20),
+        default="available",
+        nullable=False
+    )
 
     event_id = Column(
         Integer,
@@ -35,6 +49,16 @@ class Seat(Base):
     event = relationship(
         "Event",
         back_populates="seats"
+    )
+
+    # Same seat number cannot be repeated
+    # inside the same event.
+    __table_args__ = (
+        UniqueConstraint(
+            "event_id",
+            "seat_number",
+            name="unique_seat_per_event"
+        ),
     )
 
 
@@ -59,6 +83,12 @@ class Booking(Base):
         nullable=False
     )
 
+    created_at = Column(
+    DateTime,
+    default=lambda: datetime.now(timezone.utc),
+    nullable=False
+)
+
     # One seat can have only one booking
     __table_args__ = (
         UniqueConstraint(
@@ -66,3 +96,5 @@ class Booking(Base):
             name="unique_booking_per_seat"
         ),
     )
+
+    seat = relationship("Seat")
