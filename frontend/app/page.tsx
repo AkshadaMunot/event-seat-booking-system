@@ -759,36 +759,43 @@ export default function Home() {
 
           <div className="flex flex-wrap gap-2">
 
-            <button
-              onClick={() => changeMode("user")}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-                mode === "user"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              User Booking
-            </button>
+  {/* USER BOOKING */}
+  <button
+    onClick={() => changeMode("user")}
+    className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+      mode === "user" && !showBookings
+        ? "bg-indigo-600 text-white"
+        : "bg-white/10 text-white hover:bg-white/20"
+    }`}
+  >
+    User Booking
+  </button>
 
-            <button
-              onClick={() => changeMode("admin")}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-                mode === "admin"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              Admin
-            </button>
+  {/* ADMIN */}
+  <button
+    onClick={() => changeMode("admin")}
+    className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+      mode === "admin" && !showBookings
+        ? "bg-indigo-600 text-white"
+        : "bg-white/10 text-white hover:bg-white/20"
+    }`}
+  >
+    Admin
+  </button>
 
-            <button
-              onClick={loadBookings}
-              className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20"
-            >
-              Booking History
-            </button>
+  {/* BOOKING HISTORY */}
+  <button
+    onClick={loadBookings}
+    className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+      showBookings
+        ? "bg-indigo-600 text-white"
+        : "bg-white/10 text-white hover:bg-white/20"
+    }`}
+  >
+    Booking History
+  </button>
 
-          </div>
+</div>
         </div>
       </header>
 
